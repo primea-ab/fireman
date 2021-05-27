@@ -21,10 +21,10 @@ const map = {
 const TILE_SIZE = 40
 
 var movementKeys = {
-  left: ["Left", "ArrowLeft"],
-  right: ["Right", "ArrowRight"],
-  up: ["Up", "ArrowUp"],
-  down: ["Down", "ArrowDown"]
+  up: ["Up", "ArrowUp", "w", "W"],
+  left: ["Left", "ArrowLeft", "a", "A"],
+  down: ["Down", "ArrowDown", "s", "S"],
+  right: ["Right", "ArrowRight", "d", "D"]
 }
 
 var pushedKeys = {
