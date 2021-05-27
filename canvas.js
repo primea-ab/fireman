@@ -59,14 +59,10 @@ function startgame() {
     }
   }, false);
 
-  draw()
+  gameLoop()
 }
 
-
-
-function draw() {
-  var canvas = document.getElementById('canvas');
-  
+function handleInput() {
   if (pushedKeys.right && !pushedKeys.left) {
     player.x += player.maxV
   }
@@ -79,6 +75,10 @@ function draw() {
   if (pushedKeys.down && !pushedKeys.up) {
     player.y += player.maxV
   }
+}
+
+function draw() {
+  var canvas = document.getElementById('canvas');
   
   if (canvas.getContext) {
     var ctx = canvas.getContext('2d');
@@ -90,5 +90,12 @@ function draw() {
       }
     }
   }
-  window.requestAnimationFrame(draw)
+}
+
+
+function gameLoop() {
+  handleInput()
+  draw()
+
+  window.requestAnimationFrame(gameLoop)
 }
