@@ -10,11 +10,12 @@
 		socket.addEventListener('error', (err) => console.log('err', err))
 		socket.onopen = (event) => {
 			console.log('open', socket)
-			socket.send("hiiiillo")
+			socket.send(JSON.stringify({Id: 'asd', X: 3, Y: 4}))
 		}
 		// Listen for messages
 		socket.onmessage = (event) => {
-		    console.log('Message from server ', event);
+		    console.log('Message from server', event.data);
+		    console.log(JSON.parse(event.data))
 		}
 		socket.onclose = (event) => {
 			console.log('close', event)
@@ -23,7 +24,7 @@
 		document.addEventListener('keydown', (event) => {
 			if (event.key == 'f') {
 			console.log(socket, "keydown")
-			socket.send("AAAAAAAAAAAAAAAAAAAAAAAA\n")	
+			socket.send(JSON.stringify({Id: 'asd', X: 3, Y: 4}))
 			}
 			
 		})
