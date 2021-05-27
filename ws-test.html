@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+</head>
+<body>
+	test
+	<script type="text/javascript">
+		const socket = new WebSocket('ws://localhost:8000/ws')
+		socket.addEventListener('error', (err) => console.log('err', err))
+		socket.onopen = (event) => {
+			console.log('open', socket)
+			socket.send("hiiiillo")
+		}
+		// Listen for messages
+		socket.onmessage = (event) => {
+		    console.log('Message from server ', event);
+		}
+		socket.onclose = (event) => {
+			console.log('close', event)
+		}
+
+		document.addEventListener('keydown', (event) => {
+			if (event.key == 'f') {
+			console.log(socket, "keydown")
+			socket.send("AAAAAAAAAAAAAAAAAAAAAAAA\n")	
+			}
+			
+		})
+	</script>
+</body>
+</html> 
