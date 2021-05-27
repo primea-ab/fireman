@@ -22,12 +22,17 @@ function draw() {
   }, false);
 
   var canvas = document.getElementById('canvas');
+  
   if (canvas.getContext) {
     var ctx = canvas.getContext('2d');
 
     for (let x = 0; x < 20; x++) {
       for (let y = 0; y < 15; y++) {
-        ctx.strokeRect(x*40, y*40, 40, 40);
+        if (x%2 === 0 && y%2 === 0 || x%2 !== 0 && y%2 !== 0) {
+          ctx.fillRect(x*canvas.width/20, y*canvas.height/15, 40, 40);
+        } else {
+          ctx.strokeRect(x*canvas.width/20, y*canvas.height/15, 40, 40);
+        }
       }
     }
     
