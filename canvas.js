@@ -1,27 +1,64 @@
-var current_position = {'x': 0, 'y': 0} 
+var movementKeys = {
+  left: ["Left", "ArrowLeft"],
+  right: ["Right", "ArrowRight"],
+  up: ["Up", "ArrowUp"],
+  down: ["Down", "ArrowDown"]
+}
+
+var pushedKeys = {
+  left: false,
+  right: false,
+  up: false,
+  down: false
+}
+
+var player = {
+  x: 100,
+  y: 100,
+  maxV: 5,
+  radius: 20,
+  color: 'blue',
+  draw: function(ctx) {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, true);
+    ctx.closePath();
+    ctx.fillStyle = this.color;
+    ctx.fill();
+  }
+};
+
 function startgame() {
 
   document.addEventListener('keydown', (event) => {
-    switch (event.key) {
-      case 'Left':
-      case 'ArrowLeft':
-      current_position['x'] -= 1
-      break;
-      case 'Up':
-      case 'ArrowUp':
-      current_position['y'] -= 1
-      break;
-      case 'Right':
-      case 'ArrowRight':
-      current_position['x'] += 1
-      break;
-      case 'Down':
-      case 'ArrowDown':
-      current_position['y'] += 1
-      break;
-
+    if (movementKeys.left.indexOf(event.key) !== -1) {
+      pushedKeys.left = true
+    }
+    if (movementKeys.right.indexOf(event.key) !== -1) {
+      pushedKeys.right = true
+    }
+    if (movementKeys.up.indexOf(event.key) !== -1) {
+      pushedKeys.up = true
+    }
+    if (movementKeys.down.indexOf(event.key) !== -1) {
+      pushedKeys.down = true
     }
   }, false);
+
+  document.addEventListener('keyup', (event) => {
+    if (movementKeys.left.indexOf(event.key) !== -1) {
+      pushedKeys.left = false
+    }
+    if (movementKeys.right.indexOf(event.key) !== -1) {
+      pushedKeys.right = false
+    }
+    if (movementKeys.up.indexOf(event.key) !== -1) {
+      pushedKeys.up = false
+    }
+    if (movementKeys.down.indexOf(event.key) !== -1) {
+      pushedKeys.down = false
+    }
+  }, false);
+
   draw()
 }
 
@@ -30,43 +67,28 @@ function startgame() {
 function draw() {
   var canvas = document.getElementById('canvas');
   
+  if (pushedKeys.right && !pushedKeys.left) {
+    player.x += player.maxV
+  }
+  if (pushedKeys.left && !pushedKeys.right) {
+    player.x -= player.maxV
+  }
+  if (pushedKeys.up && !pushedKeys.down) {
+    player.y -= player.maxV
+  }
+  if (pushedKeys.down && !pushedKeys.up) {
+    player.y += player.maxV
+  }
+  
   if (canvas.getContext) {
     var ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height)
     for (let x = 0; x < 20; x++) {
       for (let y = 0; y < 15; y++) {
         ctx.strokeRect(x*40, y*40, 40, 40);
-        if (current_position['x'] === x && current_position['y'] === y) {
-          ctx.beginPath()
-          ctx.arc(x*40, y*40, 20, 0, Math.PI * 2, true)
-          ctx.stroke()
-        }
+        player.draw(ctx)
       }
     }
   }
   window.requestAnimationFrame(draw)
 }
-
-
-
-/*ctx.fillStyle = 'rgb(200, 0, 0)';
-ctx.fillRect(10, 10, 50, 50);
-
-ctx.fillStyle = 'rgba(0, 0, 200, 0.5)';
-ctx.fillRect(30, 30, 50, 50);
-
-ctx.beginPath();
-ctx.moveTo(75, 50);
-ctx.lineTo(100, 75);
-ctx.lineTo(100, 25);
-ctx.fill();
-
-ctx.beginPath();
-ctx.arc(75, 75, 50, 0, Math.PI * 2, true); // Outer circle
-ctx.moveTo(110, 75);
-ctx.arc(75, 75, 35, 0, Math.PI, false);  // Mouth (clockwise)
-ctx.moveTo(65, 65);
-ctx.arc(60, 65, 5, 0, Math.PI * 2, true);  // Left eye
-ctx.moveTo(95, 65);
-ctx.arc(90, 65, 5, 0, Math.PI * 2, true);  // Right eye
-ctx.stroke();*/
