@@ -87,29 +87,15 @@ function startgame() {
 }
 
 function handleInput() {
-  if (pushedKeys.right && !pushedKeys.left) {
-    player.vx = player.speed
-  }
-  if (pushedKeys.left && !pushedKeys.right) {
-    player.vx = -player.speed
-  }
-  if (!pushedKeys.left && !pushedKeys.right) {
-    player.vx = 0
-  }
-  if (pushedKeys.up && !pushedKeys.down) {
-    player.vy = -player.speed
-  }
-  if (pushedKeys.down && !pushedKeys.up) {
-    player.vy = player.speed
-  }
-  if (!pushedKeys.down && !pushedKeys.up) {
-    player.vy = 0
-  }
-  if (player.vy && player.vx) {
-    // Diagonal speed should not be higher
-    player.vx /= Math.sqrt(2)
-    player.vy /= Math.sqrt(2)
-  }
+  // Reset state
+  player.vx = 0
+  player.vy = 0
+
+  // Set new state values
+  if (pushedKeys.right) player.vx = player.speed
+  if (pushedKeys.left) player.vx = -player.speed
+  if (pushedKeys.down) player.vy = player.speed
+  if (pushedKeys.up) player.vy = -player.speed
 }
 
 function updateState() {
@@ -169,8 +155,8 @@ function draw() {
 
 function gameLoop() {
   handleInput()
-  updateState()
   collisions()
+  updateState()
   draw()
 
   window.requestAnimationFrame(gameLoop)
