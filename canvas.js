@@ -1,10 +1,10 @@
 const map = {
   "tileMap": [
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1],
@@ -99,13 +99,7 @@ function handleInput() {
 }
 
 function updateState() {
-  player.x += player.vx
-  player.y += player.vy
-}
-
-
-function collisions() {
-  var tx = (player.x - player.radius) / TILE_SIZE
+  var tx = (player.x + player.vx - player.radius) / TILE_SIZE
   var ty = (player.y - player.radius) / TILE_SIZE
 
   // Int tiles
@@ -116,17 +110,33 @@ function collisions() {
 
   if ((topLeft || bottomLeft) && player.vx < 0) {
     player.x = Math.ceil(tx) * TILE_SIZE + player.radius
+    player.vx = 0
   }
   if ((topRight || bottomRight) && player.vx > 0) {
     player.x = Math.floor(tx) * TILE_SIZE + player.radius
+    player.vx = 0
   }
+
+  tx = (player.x - player.radius) / TILE_SIZE
+  ty = (player.y + player.vy - player.radius) / TILE_SIZE
+
+  // Int tiles
+  topLeft = map.tileMap[Math.floor(ty)][Math.floor(tx)]
+  topRight = map.tileMap[Math.floor(ty)][Math.ceil(tx)]
+  bottomLeft = map.tileMap[Math.ceil(ty)][Math.floor(tx)]
+  bottomRight = map.tileMap[Math.ceil(ty)][Math.ceil(tx)]
 
   if ((topLeft || topRight) && player.vy < 0) {
     player.y = Math.ceil(ty) * TILE_SIZE + player.radius
+    player.vy = 0
   }
   if ((bottomLeft || bottomRight) && player.vy > 0) {
     player.y = Math.floor(ty) * TILE_SIZE + player.radius
+    player.vy = 0
   }
+
+  player.x += player.vx
+  player.y += player.vy
 }
 
 function draw() {
@@ -153,7 +163,6 @@ function draw() {
 function gameLoop() {
   handleInput()
   updateState()
-  collisions()
   draw()
 
   window.requestAnimationFrame(gameLoop)
