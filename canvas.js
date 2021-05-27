@@ -35,9 +35,9 @@ function setup() {
 function draw() {
   console.log(current_position)
   var canvas = document.getElementById('canvas');
+  
   if (canvas.getContext) {
     var ctx = canvas.getContext('2d');
-    ctx.clear()
     for (let x = 0; x < 20; x++) {
       for (let y = 0; y < 15; y++) {
         ctx.strokeRect(x*40, y*40, 40, 40);
