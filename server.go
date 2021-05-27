@@ -6,7 +6,8 @@ import (
 	"net/http"
 	"log"
 	"io"
-	"strings"
+	"encoding/json"
+	"bufio"
 )
 
 
@@ -36,51 +37,64 @@ func main() {
 		bufrw.WriteString("HTTP/1.1 101  Switching Procotcols\nUpgrade: websocket\nConnection: Upgrade\nSec-WebSocket-Accept: " + acceptH + "\n\n")
 		bufrw.Flush()
 
+		// Now the websockts is set up.
+		// Starting a read loop
 
-		log.Printf("Reading")
-		_, _ = bufrw.ReadByte()
-		l, _ := bufrw.ReadByte()
-		if err != nil {
-			log.Printf("error reading")
-			return
-		}
-		msgLen := l & 0x7F
-		log.Printf("L %v", msgLen)
-		b := make([]byte, 100)
-		_,_ = bufrw.Read(b)
-		mask := b[0:4]
-		maskedMsg := b[4:4+msgLen]
+		for {
+			// log.Printf("Reading")
+			// Ignoring first byte 
+			_, _ = bufrw.ReadByte()
+			// Reading length of data
+			l, _ := bufrw.ReadByte()
+			if err != nil {
+				log.Printf("error reading")
+				return
+			}
+			msgLen := l & 0x7F
+			//log.Printf("L %v", msgLen)
+			b := make([]byte, 150)
+			_,_ = bufrw.Read(b)
+			// First 4 bytes are the mask
+			mask := b[0:4]
+			// Read data with length after mask
+			maskedMsg := b[4:4+msgLen]
 
-		msg := make([]byte, msgLen)
-		for i := 0; i < int(msgLen); i++ {
-			msg[i] = maskedMsg[i] ^ mask[i % 4]
-		}
-		
-		var builder strings.Builder
-		builder.Write(msg)
-		s := builder.String()
-		log.Printf("Read bytes %#v", s)
+			// Unmask data
+			msg := make([]byte, msgLen)
+			for i := 0; i < int(msgLen); i++ {
+				msg[i] = maskedMsg[i] ^ mask[i % 4]
+			}
 
+			var message Message
+			_ = json.Unmarshal(msg, &message)
+			log.Printf("Read bytes %v", message)
 
-		err = bufrw.WriteByte(0x81)
-		if err != nil {
-			log.Printf("Failed to write %v", err)
+			data, _ := json.Marshal(message)
+
+			WriteToSocket(bufrw, data)
+
 		}
-		err = bufrw.WriteByte(0x05)
-		if err != nil {
-			log.Printf("Failed to write %v", err)
-		}
-		nn, err := bufrw.WriteString("hEllo")
-		if err != nil {
-			log.Printf("Failed to write %v", err)
-		}
-		log.Printf("Wrote %v to buffer", nn)
-		err = bufrw.Flush()
-		if err != nil {
-			log.Printf("Failed to flush %v", err)
-		}
-		log.Printf("Flushed")
-		bufrw.ReadByte()
 	})
 	log.Fatal(http.ListenAndServe(":8000", nil))
+}
+
+
+func WriteToSocket(w *bufio.ReadWriter, msg []byte) error {
+	err := w.WriteByte(0x81)
+	if err != nil {
+		return err
+	}
+	msgLen := byte(len(msg))
+	err = w.WriteByte(msgLen)
+	_, err = w.Write(msg)
+	if err != nil {
+		return err
+	}
+	return w.Flush()
+}
+
+type Message struct {
+	Id string 
+	X int32 
+	Y int32
 }
