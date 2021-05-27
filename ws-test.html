@@ -6,11 +6,13 @@
 <body>
 	test
 	<script type="text/javascript">
+		const id = 'asd' + Math.floor(Math.random() * 10000)
+
 		const socket = new WebSocket('ws://localhost:8000/ws')
 		socket.addEventListener('error', (err) => console.log('err', err))
 		socket.onopen = (event) => {
 			console.log('open', socket)
-			socket.send(JSON.stringify({Id: 'asd', X: 3, Y: 4}))
+			socket.send(JSON.stringify({Id: id, X: 3, Y: 4}))
 		}
 		// Listen for messages
 		socket.onmessage = (event) => {
@@ -24,7 +26,7 @@
 		document.addEventListener('keydown', (event) => {
 			if (event.key == 'f') {
 			console.log(socket, "keydown")
-			socket.send(JSON.stringify({Id: 'asd', X: 3, Y: 4}))
+			socket.send(JSON.stringify({Id: id, X: 3, Y: 4}))
 			}
 			
 		})

@@ -8,10 +8,17 @@ import (
 	"io"
 	"encoding/json"
 	"bufio"
+	"./game"
 )
 
 
 func main() {
+
+	var g = &game.Game{}
+	g.InputChan = make(chan game.Message)
+	go g.Play()
+
+
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request){
 		log.Printf("Headers %v", r.Header)
 		encoded, _ := r.Header["Sec-Websocket-Key"]
@@ -37,13 +44,28 @@ func main() {
 		bufrw.WriteString("HTTP/1.1 101  Switching Procotcols\nUpgrade: websocket\nConnection: Upgrade\nSec-WebSocket-Accept: " + acceptH + "\n\n")
 		bufrw.Flush()
 
+
+		outChan := make(chan game.Message)
+		g.Players = append(g.Players, outChan)
+		go func(w *bufio.ReadWriter){
+			for {
+				outMsg := <- outChan
+				data, _ := json.Marshal(outMsg)
+				WriteToSocket(w, data)
+			}
+		}(bufrw)
+
+
+
 		// Now the websockts is set up.
 		// Starting a read loop
 
 		for {
 			// log.Printf("Reading")
-			// Ignoring first byte 
-			_, _ = bufrw.ReadByte()
+			b1, _ := bufrw.ReadByte()
+			if (b1 == 0x0) {
+				continue
+			}
 			// Reading length of data
 			l, _ := bufrw.ReadByte()
 			if err != nil {
@@ -65,14 +87,11 @@ func main() {
 				msg[i] = maskedMsg[i] ^ mask[i % 4]
 			}
 
-			var message Message
+			var message game.Message
 			_ = json.Unmarshal(msg, &message)
-			log.Printf("Read bytes %v", message)
+			// log.Printf("Read bytes %v", message)
 
-			data, _ := json.Marshal(message)
-
-			WriteToSocket(bufrw, data)
-
+			g.InputChan <- message
 		}
 	})
 	log.Fatal(http.ListenAndServe(":8000", nil))
@@ -91,10 +110,4 @@ func WriteToSocket(w *bufio.ReadWriter, msg []byte) error {
 		return err
 	}
 	return w.Flush()
-}
-
-type Message struct {
-	Id string 
-	X int32 
-	Y int32
 }
