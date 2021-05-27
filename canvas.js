@@ -35,6 +35,7 @@ function setup() {
 function draw() {
   console.log(current_position)
   var canvas = document.getElementById('canvas');
+  
   if (canvas.getContext) {
     var ctx = canvas.getContext('2d');
     ctx.clear()
