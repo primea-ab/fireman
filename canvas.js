@@ -1,43 +1,38 @@
 var current_position = {'x': 0, 'y': 0} 
-function setup() {
+function startgame() {
 
   document.addEventListener('keydown', (event) => {
     switch (event.key) {
       case 'Left':
       case 'ArrowLeft':
-      console.log('LEFT');
       current_position['x'] -= 1
       break;
       case 'Up':
       case 'ArrowUp':
-      console.log('UP');
       current_position['y'] -= 1
       break;
       case 'Right':
       case 'ArrowRight':
-      console.log('RIGHT');
       current_position['x'] += 1
       break;
       case 'Down':
       case 'ArrowDown':
-      console.log('DOWN');
       current_position['y'] += 1
       break;
 
     }
-    draw()
   }, false);
-
-  console.log(current_position)
+  draw()
 }
 
 
+
 function draw() {
-  console.log(current_position)
   var canvas = document.getElementById('canvas');
   
   if (canvas.getContext) {
     var ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
     for (let x = 0; x < 20; x++) {
       for (let y = 0; y < 15; y++) {
         ctx.strokeRect(x*40, y*40, 40, 40);
@@ -49,6 +44,7 @@ function draw() {
       }
     }
   }
+  window.requestAnimationFrame(draw)
 }
 
 
