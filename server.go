@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"log"
 	"io"
+	"io/ioutil"
 	"encoding/json"
 	"bufio"
 	"./game"
@@ -13,6 +14,19 @@ import (
 
 
 func main() {
+
+	http.HandleFunc("/", func(w http.ResponseWriter, r*http.Request) {
+		body, _ := ioutil.ReadFile("index.html")
+		w.Header().Set("Content-Type", "text/html")
+		w.Write(body)
+	})
+	http.HandleFunc("/canvas.js", func(w http.ResponseWriter, r *http.Request) {
+		body, _ := ioutil.ReadFile("canvas.js")
+		w.Header().Set("Content-Type", "application/javascript")
+		w.Write(body)
+	})
+
+
 
 	var g = &game.Game{}
 	g.InputChan = make(chan game.Message)
