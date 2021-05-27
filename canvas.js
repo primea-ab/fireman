@@ -40,7 +40,7 @@ var player = {
   vx: 0,
   vy: 0,
   speed: 5,
-  radius: 20,
+  radius: TILE_SIZE / 2,
   color: 'blue',
   draw: function(ctx) {
     ctx.beginPath();
@@ -105,31 +105,28 @@ function updateState() {
 
 
 function collisions() {
-  var collidedX = []
-  var tx = player.x / TILE_SIZE
-  var txFloor = Math.floor(tx)
-  collidedX.push(txFloor)
-  var d = tx - txFloor
-  if (d < 0.5) {
-    collidedX.push(txFloor - 1)
+  var tx = (player.x - player.radius) / TILE_SIZE
+  var ty = (player.y - player.radius) / TILE_SIZE
+
+  // Int tiles
+  var topLeft = map.tileMap[Math.floor(ty)][Math.floor(tx)]
+  var topRight = map.tileMap[Math.floor(ty)][Math.ceil(tx)]
+  var bottomLeft = map.tileMap[Math.ceil(ty)][Math.floor(tx)]
+  var bottomRight = map.tileMap[Math.ceil(ty)][Math.ceil(tx)]
+
+  if ((topLeft || bottomLeft) && player.vx < 0) {
+    player.x = Math.ceil(tx) * TILE_SIZE + player.radius
   }
-  if (d > 0.5) {
-    collidedX.push(txFloor + 1)
+  if ((topRight || bottomRight) && player.vx > 0) {
+    player.x = Math.floor(tx) * TILE_SIZE + player.radius
   }
 
-  var collidedY = []
-  var ty = player.y / TILE_SIZE
-  var tyFloor = Math.floor(ty)
-  collidedY.push(tyFloor)
-  var d = ty - tyFloor
-  if (d < 0.5) {
-    collidedY.push(tyFloor - 1)
+  if ((topLeft || topRight) && player.vy < 0) {
+    player.y = Math.ceil(ty) * TILE_SIZE + player.radius
   }
-  if (d > 0.5) {
-    collidedY.push(tyFloor + 1)
+  if ((bottomLeft || bottomRight) && player.vy > 0) {
+    player.y = Math.floor(ty) * TILE_SIZE + player.radius
   }
-
-  return collidedX, collidedY
 }
 
 function draw() {
@@ -155,8 +152,8 @@ function draw() {
 
 function gameLoop() {
   handleInput()
-  collisions()
   updateState()
+  collisions()
   draw()
 
   window.requestAnimationFrame(gameLoop)
