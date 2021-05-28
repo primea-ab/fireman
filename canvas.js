@@ -1,3 +1,7 @@
+const playerId = 'id'+Math.floor(Math.random() * 1000)
+const socket = new WebSocket('ws://localhost:8000/ws')
+socket.onerror = (err) => console.log('error', err)
+
 const map = {
   "tileMap": [
     [33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33],
@@ -24,7 +28,8 @@ var movementKeys = {
   up: ["Up", "ArrowUp", "w", "W"],
   left: ["Left", "ArrowLeft", "a", "A"],
   down: ["Down", "ArrowDown", "s", "S"],
-  right: ["Right", "ArrowRight", "d", "D"]
+  right: ["Right", "ArrowRight", "d", "D"],
+  bomb: ["x", "k"]
 }
 
 var mapSprites
@@ -37,7 +42,16 @@ var pushedKeys = {
 }
 
 var player
-var otherPlayers = []
+var otherPlayers = {}
+var bombs = []
+
+function placeBomb(bx, by) {
+  map.tileMap[by][bx] = 180
+}
+
+function removeBomb(bx, by) {
+  map.tileMap[by][bx] = 0
+}
 
 function startgame() {
 
@@ -53,6 +67,12 @@ function startgame() {
     }
     if (movementKeys.down.indexOf(event.key) !== -1) {
       pushedKeys.down = true
+    }
+    if (movementKeys.bomb.indexOf(event.key) !== -1) {
+      placeBomb(
+        Math.round((player.x - player.radius) / TILE_SIZE),
+        Math.round((player.y - player.radius) / TILE_SIZE)
+      )
     }
   }, false);
 
@@ -85,6 +105,7 @@ function startgame() {
 
     Promise.all(tempTiles).then(function(sprites) {
       mapSprites = sprites
+      draw()
       // Draw each sprite onto the canvas
       gameLoop()
     });
@@ -194,11 +215,18 @@ function updateState() {
     }
   }
 
+  // No need to update if move is 0
+  if (player.vx == 0 && player.vy == 0) {
+    return
+  }
+
   player.x += player.vx
   player.y += player.vy
+  sendMove(player.x, player.y)
 }
 
 function draw() {
+  if (!mapSprites) {return}
   var canvas = document.getElementById('canvas');
   
   if (canvas.getContext) {
@@ -216,8 +244,8 @@ function draw() {
           player.draw(ctx)
         }
         // Draw the rest of the players
-        for (let i = 0; i < otherPlayers.length; i++) {
-          otherPlayers[i].draw(ctx)
+        for (const id in otherPlayers) {
+          otherPlayers[id].draw(ctx)
         }
       }
     }
@@ -230,14 +258,10 @@ function gameLoop() {
     handleInput()
     updateState()
   }
-  draw()
+
 
   window.requestAnimationFrame(gameLoop)
 }
-
-const playerId = 'id'+Math.floor(Math.random() * 1000)
-const socket = new WebSocket('ws://localhost:8000/ws')
-socket.onerror = (err) => console.log('error', err)
 
 socket.onopen = (event) => {
   socket.send(JSON.stringify({Id: playerId}))
@@ -246,42 +270,63 @@ socket.onmessage = (event) => {
 
   // Get my coordinates
   var jsonData = JSON.parse(event.data)
-  if (jsonData.Id === playerId) {
-    player = {
-      x: jsonData.X + 20,
-      y: jsonData.Y + 20,
-      vx: 0,
-      vy: 0,
-      speed: 4,
-      radius: TILE_SIZE / 3,
-      color: jsonData.Color,
-      draw: function(ctx) {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, true);
-        ctx.closePath();
-        ctx.fillStyle = this.color;
-        ctx.fill();
+  switch(jsonData.Act) {
+    case 'Move':
+      if (jsonData.Id !== playerId) {
+        otherPlayers[jsonData.Id].x = jsonData.X
+        otherPlayers[jsonData.Id].y = jsonData.Y
       }
-    };
-  } else {
-    otherPlayers.push({
-      x: jsonData.X + 20,
-      y: jsonData.Y + 20,
-      vx: 0,
-      vy: 0,
-      speed: 4,
-      radius: TILE_SIZE / 3,
-      color: jsonData.Color,
-      draw: function(ctx) {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, true);
-        ctx.closePath();
-        ctx.fillStyle = this.color;
-        ctx.fill();
+      break;
+    default: 
+      if (jsonData.Id === playerId) {
+        player = {
+          x: jsonData.X,
+          y: jsonData.Y,
+          vx: 0,
+          vy: 0,
+          speed: 4,
+          radius: TILE_SIZE / 3,
+          color: jsonData.Color,
+          draw: function(ctx) {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, true);
+            ctx.closePath();
+            ctx.fillStyle = this.color;
+            ctx.fill();
+          }
+        };
+      } else {
+        otherPlayers[jsonData.Id] = {
+          x: jsonData.X,
+          y: jsonData.Y,
+          vx: 0,
+          vy: 0,
+          speed: 4,
+          radius: TILE_SIZE / 3,
+          color: jsonData.Color,
+          draw: function(ctx) {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, true);
+            ctx.closePath();
+            ctx.fillStyle = this.color;
+            ctx.fill();
+          }
+        }
       }
-    })
-  }
 
-  console.log('message', JSON.parse(event.data))
+      draw()
+  }
+  
+
+  // console.log('message', JSON.parse(event.data))
 }
 socket.onclose = (event) => console.log('close', event)
+
+
+function sendMove(x, y) {
+  socket.send(JSON.stringify({X:x, Y:y, Act: "move", Id: playerId}))
+}
+
+function dropBomb() {
+  socket.send(JSON.stringify({Act: "bomb", Id: playerId}))
+}

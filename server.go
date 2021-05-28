@@ -16,6 +16,7 @@ import (
 func main() {
 
 	var g = game.NewGame()
+	go g.Play()
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r*http.Request) {
 		body, _ := ioutil.ReadFile("index.html")
@@ -112,7 +113,7 @@ func main() {
 				msg[i] = maskedMsg[i] ^ mask[i % 4]
 			}
 
-			log.Printf("Read bytes %s", msg)
+			// log.Printf("Read bytes %s", msg)
 			var message game.Message
 			_ = json.Unmarshal(msg, &message)
 
