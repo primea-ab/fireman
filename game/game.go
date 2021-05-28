@@ -1,43 +1,55 @@
 package game 
 
 import (
-	// "log"
+	"log"
 	"time"
 )
 
-var tileSize = 40
+var (
+	tileSize = 40
+	maxX = 17
+	maxY = 13
+)
 
 type Game struct {
 	InputChan chan Message
 	Players map[string]*Player
 
-	BombChan chan Bomb
+	BombChan chan *Bomb
 	Bombs map[int64]*Bomb
 }
 
 type Bomb struct {
 	Id int64
-	X float32
-	Y float32
+	X int
+	Y int
 	Owner string
+	Power int
 }
 
 type Message struct {
-	Act string
-	Id string 
-	X float32 
-	Y float32
-	Color string
+	Act string `json:"Act,omitempty"`
+	Id string `json:"Id,omitempty"`
+	X int `json:"X,omitempty"`
+	Y int`json:"Y,omitempty"`
+	Color string `json:"Color,omitempty"`
+	E []Tile `json:"E,omitempty"`
 }
 
 type Player struct {
-	X float32
-	Y float32
+	X int
+	Y int
 	InGame bool
 	Id string
 	Color string
 	MaxBombs int
+	BombPower int
 	OutChan chan Message
+}
+
+type Tile struct {
+	X int
+	Y int
 }
 
 
@@ -46,52 +58,94 @@ func NewGame() *Game {
 	g.InputChan = make(chan Message)
 	g.Players = map[string]*Player{}
 	g.Bombs = map[int64]*Bomb{}
+	g.BombChan = make(chan *Bomb)
 	return g
 }
 
 func (g *Game) Play() {
 	for {
-		m := <- g.InputChan
-		// log.Printf("Game loop %v", m)
-		if m.Act == "move" {
-			g.Players[m.Id].X = m.X
-			g.Players[m.Id].Y = m.Y
-			g.broadcast(Message{Act: "move",Id: m.Id, X: m.X, Y: m.Y})
-		} else if m.Act == "bomb" {
-			activeBombs := 0
-			for _, v := range g.Bombs {
-				if v.Owner == m.Id {
-					activeBombs = activeBombs + 1
+		select {
+			case m := <- g.InputChan:
+				// log.Printf("Game loop %v", m)
+				if m.Act == "move" {
+					g.Players[m.Id].X = m.X
+					g.Players[m.Id].Y = m.Y
+					g.broadcast(Message{Act: "move",Id: m.Id, X: m.X, Y: m.Y})
+				} else if m.Act == "bomb" {
+					activeBombs := 0
+					for _, v := range g.Bombs {
+						if v.Owner == m.Id {
+							activeBombs = activeBombs + 1
+						}
+					}
+					if activeBombs < g.Players[m.Id].MaxBombs {
+						newBomb := &Bomb{Id: time.Now().UnixNano(), Owner: m.Id, X: g.Players[m.Id].X, Y: g.Players[m.Id].Y, Power: g.Players[m.Id].BombPower}
+						log.Printf("%#v", newBomb)
+						g.Bombs[newBomb.Id] = newBomb
+						go func() {
+							time.Sleep(time.Second * 2)
+							g.BombChan <- newBomb
+						}()
+						g.broadcast(Message{Act: "bomb", X: newBomb.X, Y: newBomb.Y})
+					}
+
 				}
-			}
-			if activeBombs < g.Players[m.Id].MaxBombs {
-				newBomb := &Bomb{Id: time.Now().UnixNano(), Owner: m.Id, X: g.Players[m.Id].X, Y: g.Players[m.Id].Y}
-				g.Bombs[newBomb.Id] = newBomb
-				g.broadcast(Message{Act: "bomb", X: newBomb.X, Y: newBomb.Y})
-			}
+			case b := <- g.BombChan:
+				x := b.X/tileSize
+				y := b.Y/tileSize
+				log.Printf("Detonation tile x:%v, y:%v", x, y)
+			
+				// If x is even there will be a horizontal detonation
+				// If y is even there will be a vertical detontaion
+				// IF Both are odd there will be a Cross detonatoin 
+				// Add tile that bomb is on to exploded tiles
+				explodedTiles := []Tile{Tile{X: x, Y: y}}
+				if x % 2 == 1 {
+					// Explod up/down
+					for i := max(1, y - b.Power); i <= min(maxY, y + b.Power); i++ {
+						if i != y {
+							explodedTiles = append(explodedTiles, Tile{X: x, Y: i})
+						}
+					}
+				}
+				if y % 2 == 1 {
+					// Explode left/right
+					for i := max(1, x - b.Power); i <= min(maxX, x + b.Power); i++ {
+						if i != x {
+							explodedTiles = append(explodedTiles, Tile{X: i, Y: y})
+						}
+					}
+				}
+				log.Printf("Detonation %#v", explodedTiles)
+				delete(g.Bombs, b.Id)
+
+				g.broadcast(Message{Act: "ex", E: explodedTiles})
+
 		}
+		
 	}
 }
 
 func (g *Game) AddPlayer(player *Player) {
 
 	player.MaxBombs = 1
+	player.BombPower = 3
 
 	if len(g.Players) == 0 {
-		player.X = float32(tileSize + 20)
-		player.Y = float32(tileSize + 20)
+		player.X = tileSize + 20
+		player.Y = tileSize + 20
 		player.Color = "red"
 	} else if len(g.Players) == 1 {
-		player.X = float32(tileSize*17 + 20)
-		player.Y = float32(tileSize*13 + 20)
+		player.X = tileSize*17 + 20
+		player.Y = tileSize*13 + 20
 		player.Color = "blue"
 	} else if len(g.Players) == 2 {
-		player.X = float32(tileSize*17 + 20)
-		player.Y = float32(tileSize + 20)
+		player.X = tileSize*17 + 20
+		player.Y = tileSize + 20
 		player.Color = "orange"
 	} else if len(g.Players) == 3 {
-		player.X = float32(tileSize + 20)
-		player.Y = float32(tileSize*13 + 20)
+		player.X = tileSize + 20
+		player.Y = tileSize*13 + 20
 		player.Color = "purple"
 	} else {
 		return
@@ -111,4 +165,22 @@ func (g *Game)broadcast(msg Message) {
 	for _, p := range g.Players {
 		p.OutChan <- msg
 	}
+}
+
+func min(x, y int) int {
+	if x > y {
+		return y
+	}
+	return x
+}
+
+func max(x, y int) int {
+	if x > y {
+		return x
+	}
+	return y
+}
+
+func onAnyTile(xCoord, yCoord int, tiles []Tile) bool {
+	return false
 }
