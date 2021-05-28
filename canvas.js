@@ -506,6 +506,13 @@ socket.onmessage = (event) => {
     case 'ex':
       removeBomb(jsonData.E[0].Y, jsonData.E[0].Y)
       break
+    case 'kill':
+      if (jsonData.Id == playerId) {
+        player.color = 'white'
+      } else {
+        otherPlayers[jsonData.Id].color = 'white'
+      }
+      break;
     default: 
       if (jsonData.Id === playerId) {
         player = {
