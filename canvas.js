@@ -188,3 +188,14 @@ function gameLoop() {
 
   window.requestAnimationFrame(gameLoop)
 }
+
+const playerId = 'id'+Math.floor(Math.random() * 1000)
+const socket = new WebSocket('ws://localhost:8000/ws')
+socket.onerror = (err) => console.log('error', err)
+socket.onopen = (event) => {
+  socket.send(JSON.stringify({Id: playerId}))
+}
+socket.onmessage = (event) => {
+  console.log('message', JSON.parse(event.data))
+}
+socket.onclose = (event) => console.log('close', event)
