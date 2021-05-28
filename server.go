@@ -142,8 +142,15 @@ func WriteToSocket(w *bufio.ReadWriter, msg []byte) error {
 	if err != nil {
 		return err
 	}
-	msgLen := byte(len(msg))
-	err = w.WriteByte(msgLen)
+	msgLen := len(msg)
+	if (msgLen < 126) {
+		w.WriteByte(byte(msgLen))
+	} else {
+		w.WriteByte(0x7E)
+		w.WriteByte(byte(msgLen >> 8))
+		w.WriteByte(byte(msgLen))
+	}
+	
 	_, err = w.Write(msg)
 	if err != nil {
 		return err

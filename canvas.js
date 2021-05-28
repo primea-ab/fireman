@@ -81,7 +81,7 @@ var gamepadAPI = {
 
 
 const playerId = 'id'+Math.floor(Math.random() * 1000)
-const socket = new WebSocket('ws://192.168.1.216:8000/ws')
+const socket = new WebSocket(`ws://${window.location.host}/ws`)
 socket.onerror = (err) => console.log('error', err)
 
 const map = {
@@ -493,8 +493,8 @@ socket.onopen = (event) => {
   socket.send(JSON.stringify({Id: playerId}))
 }
 socket.onmessage = (event) => {
-
-  // Get my coordinates
+  console.log(event.data)
+ // Get my coordinates
   var jsonData = JSON.parse(event.data)
   switch(jsonData.Act) {
     case 'move':
@@ -508,6 +508,8 @@ socket.onmessage = (event) => {
       var by = Math.round((jsonData.Y - player.radius) / TILE_SIZE)
       placeBomb(bx, by)
       break;
+    case 'ex':
+      console.log(jsonData)
     default: 
       if (jsonData.Id === playerId) {
         player = {
