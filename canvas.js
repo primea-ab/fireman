@@ -93,7 +93,7 @@ const map = {
     [33,0,71,0,71,0,71,0,71,0,71,0,71,0,71,0,71,0,33],
     [33,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,33],
     [33,0,71,0,71,0,71,0,71,0,71,0,71,0,71,0,71,0,33],
-    [33,0,0,0,0,0,0,0,0,133,0,0,0,0,0,0,0,0,33],
+    [33,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,33],
     [33,0,71,0,71,0,71,0,71,0,71,0,71,0,71,0,71,0,33],
     [33,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,33],
     [33,0,71,0,71,0,71,0,71,0,71,0,71,0,71,0,71,0,33],
@@ -115,6 +115,7 @@ var movementKeys = {
 }
 
 var mapSprites
+var floorSPrites
 
 var pushedKeys = {
   left: false,
@@ -164,10 +165,6 @@ function startgame() {
     }
     if (movementKeys.bomb.indexOf(event.key) !== -1) {
       dropBomb()
-      /*placeBomb(
-        Math.round((player.x - player.radius) / TILE_SIZE),
-        Math.round((player.y - player.radius) / TILE_SIZE)
-      )*/
     }
   }, false);
 
@@ -187,6 +184,29 @@ function startgame() {
   }, false);
 
   image = new Image();
+  image2 = new Image();
+  var image1Done = false
+  var image2Done = false
+
+  image2.onload = function() {
+    const IMAGE_TILE_SIZE = 16
+    var tempTiles = []
+    for (let y = 0; y < image2.height / IMAGE_TILE_SIZE; y++) {
+      for (let x = 0; x < image2.width / IMAGE_TILE_SIZE; x++) {
+        tempTiles.push(createImageBitmap(image2, x * 16, y * 16, 16, 16))
+      }
+    }
+
+    Promise.all(tempTiles).then(function(sprites) {
+      floorSPrites = sprites
+      image1Done = true
+      if (image1Done && image2Done) {
+        draw()
+        // Draw each sprite onto the canvas
+        gameLoop()
+      }
+    });
+  }
 
   // Wait for the sprite sheet to load
   image.onload = function() {
@@ -194,19 +214,23 @@ function startgame() {
     var tempTiles = []
     for (let y = 0; y < image.height / IMAGE_TILE_SIZE; y++) {
       for (let x = 0; x < image.width / IMAGE_TILE_SIZE; x++) {
-        tempTiles.push(createImageBitmap(image, x * 16, y * 16, 16, 16)) // Add all tiles flipped?
+        tempTiles.push(createImageBitmap(image, x * 16, y * 16, 16, 16, {premultiplyAlpha: 'premultiply'}))
       }
     }
 
     Promise.all(tempTiles).then(function(sprites) {
       mapSprites = sprites
-      draw()
-      // Draw each sprite onto the canvas
-      gameLoop()
+      image2Done = true
+      if (image1Done && image2Done) {
+        draw()
+        // Draw each sprite onto the canvas
+        gameLoop()
+      }
     });
   }
 
   image.src = 'cave_B.png'
+  image2.src = 'cave_A.png'
 }
 
 function handleInput() {
@@ -361,8 +385,36 @@ function draw() {
     for (let x = 0; x < map.tileMap[0].length; x++) {
       for (let y = 0; y < map.tileMap.length; y++) {
         if (map.tileMap[y][x] === 0) {
-          ctx.strokeRect(x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE);
+          if (y === 1) {
+            if (x === 1) {
+              ctx.drawImage(floorSPrites[0], x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE)
+            } else if (x === map.tileMap[0].length - 2) {
+              ctx.drawImage(floorSPrites[2], x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE)
+            } else {
+              ctx.drawImage(floorSPrites[1], x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE)
+            }
+          } else if (y > 1 && y < map.tileMap.length - 2) {
+            if (x === 1) {
+              ctx.drawImage(floorSPrites[5], x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE)
+            } else if (x === map.tileMap[0].length - 2) {
+              ctx.drawImage(floorSPrites[7], x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE)
+            } else {
+              ctx.drawImage(floorSPrites[6], x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE)
+            }
+          } else if (y === map.tileMap.length - 2) {
+            if (x === 1) {
+              ctx.drawImage(floorSPrites[10], x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE)
+            } else if (x === map.tileMap[0].length - 2) {
+              ctx.drawImage(floorSPrites[12], x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE)
+            } else {
+              ctx.drawImage(floorSPrites[11], x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE)
+            }
+          }
+
+          // Plain tiles (if too laggy)
+          //ctx.strokeRect(x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE);
         } else {
+          ctx.drawImage(floorSPrites[6], x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE)
           ctx.drawImage(mapSprites[map.tileMap[y][x]], x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE)
         }
         if (player) {
