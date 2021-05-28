@@ -119,7 +119,6 @@ function updateState() {
   // Going right
   var next_tile_right_x = (player.x + player.radius + player.vx) / TILE_SIZE
   if (Math.floor(curr_tile_right_x) < Math.floor(next_tile_right_x)) {
-    console.log("Going right, overlap: " + curr_tile_right_x + ", " + next_tile_right_x)
     // There's a new overlap. If new tile overlap is wall, we must block passage
     var overlapping_tile_right_x = Math.floor(next_tile_right_x)
     for (var i = 0; i < 3; i++) {
@@ -135,7 +134,6 @@ function updateState() {
   // Going left
   var next_tile_left_x = (player.x - player.radius + player.vx) / TILE_SIZE
   if (Math.floor(curr_tile_left_x) > Math.floor(next_tile_left_x)) {
-    console.log("Going left, overlap: " + curr_tile_left_x + ", " + next_tile_left_x)
     // New overlap to the left
     var overlapping_tile_left_x = Math.floor(next_tile_left_x)
     for (var i = 0; i < 3; i++) {
@@ -150,7 +148,6 @@ function updateState() {
   // Going down
   var next_tile_down_y = (player.y + player.radius + player.vy) / TILE_SIZE
   if (Math.floor(next_tile_down_y) > Math.floor(curr_tile_bot_y)) {
-    console.log("Going down, overlap: " + curr_tile_bot_y + ", " + next_tile_right_x)
     // New overlap downwards
     var overlapping_tile_down_y = Math.floor(next_tile_down_y)
     for (var i = 0; i < 3; i++) {
@@ -178,7 +175,23 @@ function updateState() {
 
   // Going diagonally
   if (player.vx && player.vy) {
-
+    // Four diagonals, check all of them
+    // Right down
+    if (Math.floor(curr_tile_right_x) < Math.floor(next_tile_right_x) && Math.floor(next_tile_down_y) > Math.floor(curr_tile_bot_y)) {
+      player.vy = 0
+    }
+    // Left down
+    if (Math.floor(curr_tile_left_x) > Math.floor(next_tile_left_x) && Math.floor(next_tile_down_y) > Math.floor(curr_tile_bot_y)) {
+      player.vy = 0
+    }
+    // Right up 
+    if (Math.floor(curr_tile_right_x) < Math.floor(next_tile_right_x) && Math.floor(next_tile_up_y) < Math.floor(curr_tile_top_y)) {
+      player.vy = 0
+    }
+    // Left up
+    if (Math.floor(curr_tile_left_x) > Math.floor(next_tile_left_x) && Math.floor(next_tile_up_y) < Math.floor(curr_tile_top_y)) {
+      player.vy = 0
+    }
   }
 
   player.x += player.vx
@@ -240,7 +253,7 @@ socket.onmessage = (event) => {
       vx: 0,
       vy: 0,
       speed: 4,
-      radius: TILE_SIZE / 4,
+      radius: TILE_SIZE / 3,
       color: jsonData.Color,
       draw: function(ctx) {
         ctx.beginPath();
@@ -257,7 +270,7 @@ socket.onmessage = (event) => {
       vx: 0,
       vy: 0,
       speed: 4,
-      radius: TILE_SIZE / 2,
+      radius: TILE_SIZE / 3,
       color: jsonData.Color,
       draw: function(ctx) {
         ctx.beginPath();
