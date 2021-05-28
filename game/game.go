@@ -12,6 +12,7 @@ var (
 	pr = 16
 	startingPower = 6
 	startingBombs = 3
+	explosionTime = time.Millisecond * 500
 )
 
 type Game struct {
@@ -135,7 +136,7 @@ func (g *Game) Play() {
 
 				g.broadcast(Message{Act: "ex", E: explodedTiles, BombId: b.Id})
 				go func(){
-					time.Sleep(time.Second)
+					time.Sleep(explosionTime)
 					g.broadcast(Message{Act: "rex", BombId: b.Id})
 				}()
 
