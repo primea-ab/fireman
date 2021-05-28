@@ -10,6 +10,8 @@ var (
 	maxX = 17
 	maxY = 13
 	pr = 16
+	startingPower = 6
+	startingBombs = 3
 )
 
 type Game struct {
@@ -147,8 +149,8 @@ func (g *Game) Play() {
 
 func (g *Game) AddPlayer(player *Player) {
 
-	player.MaxBombs = 1
-	player.BombPower = 3
+	player.MaxBombs = startingBombs
+	player.BombPower = startingPower
 	player.Alive = true
 
 	if len(g.Players) == 0 {
