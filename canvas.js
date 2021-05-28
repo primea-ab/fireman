@@ -139,6 +139,7 @@ function placeBomb(bx, by) {
 }
 
 function removeBomb(bx, by) {
+  console.log(`removing bomb at: ${bx},${by}`)
   map.tileMap[by][bx] = 0
 }
 
@@ -501,12 +502,10 @@ socket.onmessage = (event) => {
       }
       break;
     case 'bomb':
-      var bx = Math.round((jsonData.X - player.radius) / TILE_SIZE)
-      var by = Math.round((jsonData.Y - player.radius) / TILE_SIZE)
-      placeBomb(bx, by)
+      placeBomb(jsonData.X, jsonData.Y)
       break;
     case 'ex':
-      console.log(jsonData)
+      removeBomb(jsonData.E[0].Y, jsonData.E[0].Y)
       break
     default: 
       if (jsonData.Id === playerId) {
