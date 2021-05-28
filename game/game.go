@@ -9,6 +9,7 @@ var (
 	tileSize = 40
 	maxX = 17
 	maxY = 13
+	pr = 16
 )
 
 type Game struct {
@@ -45,6 +46,7 @@ type Player struct {
 	MaxBombs int
 	BombPower int
 	OutChan chan Message
+	Alive bool
 }
 
 type Tile struct {
@@ -72,6 +74,9 @@ func (g *Game) Play() {
 					g.Players[m.Id].Y = m.Y
 					g.broadcast(Message{Act: "move",Id: m.Id, X: m.X, Y: m.Y})
 				} else if m.Act == "bomb" {
+					if !g.Players[m.Id].Alive {
+						continue
+					}
 					activeBombs := 0
 					for _, v := range g.Bombs {
 						if v.Owner == m.Id {
@@ -79,7 +84,13 @@ func (g *Game) Play() {
 						}
 					}
 					if activeBombs < g.Players[m.Id].MaxBombs {
-						newBomb := &Bomb{Id: time.Now().UnixNano(), Owner: m.Id, X: g.Players[m.Id].X, Y: g.Players[m.Id].Y, Power: g.Players[m.Id].BombPower}
+						newBomb := &Bomb{
+							Id: time.Now().UnixNano(),
+							Owner: m.Id,
+							X: g.Players[m.Id].X/tileSize,
+							Y: g.Players[m.Id].Y/tileSize,
+							Power: g.Players[m.Id].BombPower,
+						}
 						log.Printf("%#v", newBomb)
 						g.Bombs[newBomb.Id] = newBomb
 						go func() {
@@ -91,8 +102,8 @@ func (g *Game) Play() {
 
 				}
 			case b := <- g.BombChan:
-				x := b.X/tileSize
-				y := b.Y/tileSize
+				x := b.X
+				y := b.Y
 				log.Printf("Detonation tile x:%v, y:%v", x, y)
 			
 				// If x is even there will be a horizontal detonation
@@ -121,6 +132,13 @@ func (g *Game) Play() {
 
 				g.broadcast(Message{Act: "ex", E: explodedTiles})
 
+				for id, p := range g.Players {
+					if onAnyTile(p.X, p.Y, explodedTiles) {
+						p.Alive = false
+						g.broadcast(Message{Act: "kill", Id: id})
+					}
+				}
+
 		}
 		
 	}
@@ -130,6 +148,7 @@ func (g *Game) AddPlayer(player *Player) {
 
 	player.MaxBombs = 1
 	player.BombPower = 3
+	player.Alive = true
 
 	if len(g.Players) == 0 {
 		player.X = tileSize + 20
@@ -182,5 +201,18 @@ func max(x, y int) int {
 }
 
 func onAnyTile(xCoord, yCoord int, tiles []Tile) bool {
+	topPos := Tile{Y: (yCoord-pr)/tileSize, X: xCoord/tileSize}
+	leftPos := Tile{Y: yCoord/tileSize, X: (xCoord - pr)/tileSize}
+	rightPos := Tile{Y: yCoord/tileSize, X: (xCoord + pr)/tileSize}
+	bottomPos := Tile{Y: (yCoord+pr)/tileSize, X: xCoord/tileSize}
+	for _, v := range tiles {
+		if (topPos.Y == v.Y && topPos.X == v.X) ||
+		   (leftPos.Y == v.Y && topPos.X == v.X) ||
+		   (rightPos.Y == v.Y && rightPos.X == v.X) ||
+		   (bottomPos.Y == v.Y && bottomPos.X == v.X) {
+		   	return true
+		   }
+
+	}
 	return false
 }
