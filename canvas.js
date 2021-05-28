@@ -113,6 +113,7 @@ var movementKeys = {
 
 var mapSprites
 var floorSPrites
+var fireSprite
 
 var pushedKeys = {
   left: false,
@@ -182,8 +183,23 @@ function startgame() {
 
   image = new Image();
   image2 = new Image();
+  image3 = new Image();
   var image1Done = false
   var image2Done = false
+  var image3Done = false
+
+  image3.onload = function() {
+
+    createImageBitmap(image3, 51, 8, 10, 10).then(function(sprite) {
+      fireSprite = sprite
+      image3Done = true
+      if (image1Done && image2Done && image3Done) {
+        draw()
+        // Draw each sprite onto the canvas
+        gameLoop()
+      }
+    })
+  }
 
   image2.onload = function() {
     const IMAGE_TILE_SIZE = 16
@@ -197,7 +213,7 @@ function startgame() {
     Promise.all(tempTiles).then(function(sprites) {
       floorSPrites = sprites
       image1Done = true
-      if (image1Done && image2Done) {
+      if (image1Done && image2Done && image3Done) {
         draw()
         // Draw each sprite onto the canvas
         gameLoop()
@@ -222,7 +238,7 @@ function startgame() {
     Promise.all(tempTiles).then(function(sprites) {
       mapSprites = sprites
       image2Done = true
-      if (image1Done && image2Done) {
+      if (image1Done && image2Done && image3Done) {
         draw()
         // Draw each sprite onto the canvas
         gameLoop()
@@ -232,6 +248,7 @@ function startgame() {
 
   image.src = 'cave_B.png'
   image2.src = 'cave_A.png'
+  image3.src = 'fire.png'
 }
 
 function handleInput() {
@@ -418,14 +435,24 @@ function draw() {
           ctx.drawImage(floorSPrites[6], x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE)
           ctx.drawImage(mapSprites[map.tileMap[y][x]], x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE)
         }
-        if (player) {
-          player.draw(ctx)
-        }
-        // Draw the rest of the players
-        for (const id in otherPlayers) {
-          otherPlayers[id].draw(ctx)
-        }
       }
+    }
+
+    if (player) {
+      player.draw(ctx)
+    }
+    // Draw the rest of the players
+    for (const id in otherPlayers) {
+      otherPlayers[id].draw(ctx)
+    }
+    for (let i = 0; i < explosions.length; i++) {
+      ctx.drawImage(fireSprite, explosions[i].x*TILE_SIZE, explosions[i].y*TILE_SIZE, TILE_SIZE, TILE_SIZE)
+      explosions[i].ttl -= 1
+    }
+    var prevExplosionsLength = explosions.length
+    explosions = explosions.filter(explosion => explosion.ttl > 0)
+    if (prevExplosionsLength !== explosions.length) {
+      draw()
     }
   }
 }
@@ -459,6 +486,9 @@ socket.onmessage = (event) => {
       break;
     case 'ex':
       removeBomb(jsonData.E[0].X, jsonData.E[0].Y)
+      for (let i = 0; i < jsonData.E.length; i++) {
+        explosions.push({x: jsonData.E[i].X, y: jsonData.E[i].Y, ttl: 20})
+      }
       break
     case 'kill':
       if (jsonData.Id == playerId) {

@@ -38,6 +38,11 @@ func main() {
 		w.Header().Set("Content-Type", "image/webbp")
 		w.Write(body)
 	})
+	http.HandleFunc("/fire.png", func(w http.ResponseWriter, r *http.Request) {
+		body, _ := ioutil.ReadFile("fire.png")
+		w.Header().Set("Content-Type", "image/webbp")
+		w.Write(body)
+	})
 	http.HandleFunc("/start", func(w http.ResponseWriter, r *http.Request) {
 		go g.Play()
 		w.WriteHeader(http.StatusNoContent)
