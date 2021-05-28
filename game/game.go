@@ -175,6 +175,26 @@ func (g *Game) AddPlayer(player *Player) {
 		player.X = tileSize + 20
 		player.Y = tileSize*13 + 20
 		player.Color = "purple"
+	} else if len(g.Players) == 4 {
+		player.X = tileSize*9 + 20
+		player.Y = tileSize + 20
+		player.Color = "green"
+	} else if len(g.Players) == 5 {
+		player.X = tileSize*9 + 20
+		player.Y = tileSize*13 + 20
+		player.Color = "yellow"
+	} else if len(g.Players) == 6 {
+		player.X = tileSize + 20
+		player.Y = tileSize*7 + 20
+		player.Color = "pink"
+	} else if len(g.Players) == 7 {
+		player.X = tileSize*17 + 20
+		player.Y = tileSize*7 + 20
+		player.Color = "black"
+	} else if len(g.Players) == 8 {
+		player.X = tileSize*9 + 20
+		player.Y = tileSize*7 + 20
+		player.Color = "brown"
 	} else {
 		return
 	}
