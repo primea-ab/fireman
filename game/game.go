@@ -135,6 +135,7 @@ func (g *Game) Play() {
 				for id, p := range g.Players {
 					if onAnyTile(p.X, p.Y, explodedTiles) {
 						p.Alive = false
+						p.Color = "white"
 						g.broadcast(Message{Act: "kill", Id: id})
 					}
 				}
