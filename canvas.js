@@ -42,7 +42,7 @@ var player = {
   vx: 0,
   vy: 0,
   speed: 4,
-  radius: TILE_SIZE / 2,
+  radius: TILE_SIZE / 3,
   color: 'blue',
   draw: function(ctx) {
     ctx.beginPath();
@@ -120,40 +120,79 @@ function handleInput() {
 }
 
 function updateState() {
-  var tx = (player.x + player.vx - player.radius) / TILE_SIZE
-  var ty = (player.y - player.radius) / TILE_SIZE
+  var curr_tile_mid_x = player.x / TILE_SIZE
+  var curr_tile_mid_y = player.y / TILE_SIZE
+  var curr_tile_right_x = (player.x + player.radius) / TILE_SIZE
+  var curr_tile_left_x = (player.x - player.radius) / TILE_SIZE
+  var curr_tile_top_y = (player.y - player.radius) / TILE_SIZE
+  var curr_tile_bot_y = (player.y + player.radius) / TILE_SIZE
+  var curr_tiles_x = [curr_tile_left_x, curr_tile_mid_x, curr_tile_right_x]
+  var curr_tiles_y = [curr_tile_top_y, curr_tile_mid_y, curr_tile_bot_y]
 
-  // Int tiles
-  var topLeft = map.tileMap[Math.floor(ty)][Math.floor(tx)]
-  var topRight = map.tileMap[Math.floor(ty)][Math.ceil(tx)]
-  var bottomLeft = map.tileMap[Math.ceil(ty)][Math.floor(tx)]
-  var bottomRight = map.tileMap[Math.ceil(ty)][Math.ceil(tx)]
 
-  if ((topLeft || bottomLeft) && player.vx < 0) {
-    player.x = Math.ceil(tx) * TILE_SIZE + player.radius
-    player.vx = 0
+  // Going right
+  var next_tile_right_x = (player.x + player.radius + player.vx) / TILE_SIZE
+  if (Math.floor(curr_tile_right_x) < Math.floor(next_tile_right_x)) {
+    console.log("Going right, overlap: " + curr_tile_right_x + ", " + next_tile_right_x)
+    // There's a new overlap. If new tile overlap is wall, we must block passage
+    var overlapping_tile_right_x = Math.floor(next_tile_right_x)
+    for (var i = 0; i < 3; i++) {
+      var yTile = Math.floor(curr_tiles_y[i])
+      if (map.tileMap[yTile][overlapping_tile_right_x]) {
+        player.vx = 0
+        // An extra pixel for reasons
+        player.x = overlapping_tile_right_x * TILE_SIZE - player.radius - 1
+      }
+    }
   }
-  if ((topRight || bottomRight) && player.vx > 0) {
-    player.x = Math.ceil(tx) * TILE_SIZE - player.radius
-    player.vx = 0
+
+  // Going left
+  var next_tile_left_x = (player.x - player.radius + player.vx) / TILE_SIZE
+  if (Math.floor(curr_tile_left_x) > Math.floor(next_tile_left_x)) {
+    console.log("Going left, overlap: " + curr_tile_left_x + ", " + next_tile_left_x)
+    // New overlap to the left
+    var overlapping_tile_left_x = Math.floor(next_tile_left_x)
+    for (var i = 0; i < 3; i++) {
+      var yTile = Math.floor(curr_tiles_y[i])
+      if (map.tileMap[yTile][overlapping_tile_left_x]) {
+        player.vx = 0
+        player.x = (overlapping_tile_left_x + 1) * TILE_SIZE + player.radius + 1
+      }
+    }
   }
 
-  tx = (player.x - player.radius) / TILE_SIZE
-  ty = (player.y + player.vy - player.radius) / TILE_SIZE
-
-  // Int tiles
-  topLeft = map.tileMap[Math.floor(ty)][Math.floor(tx)]
-  topRight = map.tileMap[Math.floor(ty)][Math.ceil(tx)]
-  bottomLeft = map.tileMap[Math.ceil(ty)][Math.floor(tx)]
-  bottomRight = map.tileMap[Math.ceil(ty)][Math.ceil(tx)]
-
-  if ((topLeft || topRight) && player.vy < 0) {
-    player.y = Math.ceil(ty) * TILE_SIZE + player.radius
-    player.vy = 0
+  // Going down
+  var next_tile_down_y = (player.y + player.radius + player.vy) / TILE_SIZE
+  if (Math.floor(next_tile_down_y) > Math.floor(curr_tile_bot_y)) {
+    console.log("Going down, overlap: " + curr_tile_bot_y + ", " + next_tile_right_x)
+    // New overlap downwards
+    var overlapping_tile_down_y = Math.floor(next_tile_down_y)
+    for (var i = 0; i < 3; i++) {
+      var xTile = Math.floor(curr_tiles_x[i])
+      if (map.tileMap[overlapping_tile_down_y][xTile]) {
+        player.vy = 0
+        player.y = overlapping_tile_down_y * TILE_SIZE - player.radius - 1
+      }
+    }
   }
-  if ((bottomLeft || bottomRight) && player.vy > 0) {
-    player.y = Math.floor(ty) * TILE_SIZE + player.radius
-    player.vy = 0
+
+  // Going up
+  var next_tile_up_y = (player.y - player.radius + player.vy) / TILE_SIZE
+  if (Math.floor(next_tile_up_y) < Math.floor(curr_tile_top_y)) {
+    // New overlap upwards
+    var overlapping_tile_up_y = Math.floor(next_tile_up_y)
+    for (var i = 0; i < 3; i++) {
+      var xTile = Math.floor(curr_tiles_x[i])
+      if (map.tileMap[overlapping_tile_up_y][xTile]) {
+        player.vy = 0
+        player.y = (overlapping_tile_up_y + 1) * TILE_SIZE + player.radius + 1
+      }
+    }
+  }
+
+  // Going diagonally
+  if (player.vx && player.vy) {
+
   }
 
   player.x += player.vx
