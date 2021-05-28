@@ -27,6 +27,11 @@ func main() {
 		w.Header().Set("Content-Type", "application/javascript")
 		w.Write(body)
 	})
+	http.HandleFunc("/cave_B.png", func(w http.ResponseWriter, r *http.Request) {
+		body, _ := ioutil.ReadFile("cave_B.png")
+		w.Header().Set("Content-Type", "image/webbp")
+		w.Write(body)
+	})
 	http.HandleFunc("/start", func(w http.ResponseWriter, r *http.Request) {
 		go g.Play()
 		w.WriteHeader(http.StatusNoContent)
