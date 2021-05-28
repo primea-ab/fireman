@@ -490,7 +490,6 @@ socket.onopen = (event) => {
   socket.send(JSON.stringify({Id: playerId}))
 }
 socket.onmessage = (event) => {
-  console.log(event.data)
  // Get my coordinates
   var jsonData = JSON.parse(event.data)
   switch(jsonData.Act) {
