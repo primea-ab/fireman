@@ -131,7 +131,7 @@ var pushedGamepadKeys = {
 
 var player
 var otherPlayers = {}
-var explosions = []
+var explosions = {}
 
 function placeBomb(bx, by) {
   if (map.tileMap[by][bx] === 0) {
@@ -445,14 +445,10 @@ function draw() {
     for (const id in otherPlayers) {
       otherPlayers[id].draw(ctx)
     }
-    for (let i = 0; i < explosions.length; i++) {
-      ctx.drawImage(fireSprite, explosions[i].x*TILE_SIZE, explosions[i].y*TILE_SIZE, TILE_SIZE, TILE_SIZE)
-      explosions[i].ttl -= 1
-    }
-    var prevExplosionsLength = explosions.length
-    explosions = explosions.filter(explosion => explosion.ttl > 0)
-    if (prevExplosionsLength !== explosions.length) {
-      draw()
+    for (let explosion of Object.values(explosions)) {
+      for (fire of explosion) {
+        ctx.drawImage(fireSprite, fire.X*TILE_SIZE, fire.Y*TILE_SIZE, TILE_SIZE, TILE_SIZE)
+      }
     }
   }
 }
@@ -486,9 +482,10 @@ socket.onmessage = (event) => {
       break;
     case 'ex':
       removeBomb(jsonData.E[0].X, jsonData.E[0].Y)
-      for (let i = 0; i < jsonData.E.length; i++) {
-        explosions.push({x: jsonData.E[i].X, y: jsonData.E[i].Y, ttl: 20})
-      }
+      explosions[jsonData.BombId] = jsonData.E
+      break
+    case 'rex':
+      delete explosions[jsonData.BombId]
       break
     case 'kill':
       if (jsonData.Id == playerId) {
