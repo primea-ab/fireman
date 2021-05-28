@@ -42,8 +42,10 @@ var gamepadAPI = {
     // assign received values
     gamepadAPI.axesStatus = axes;
     gamepadAPI.buttonsStatus = pressed;
-    // return buttons for debugging purposes
-    return pressed;
+
+    var gamepadAction = [axes, pressed];
+    // return buttons for debugging purposes  -- men vi avänder svaret för annat än att debugga.
+    return gamepadAction;
   },
   buttonPressed: function(button, hold) {
     var newPress = false;
@@ -257,32 +259,34 @@ function handleInput() {
   player.vy = 0
 
   var pressedKeys = gamepadAPI.update()
-  if (pressedKeys.indexOf('A') !== -1) {
+  console.log(pressedKeys[1]),
+  console.log(pressedKeys[0])
+  if (pressedKeys[1].indexOf('A') !== -1) {
     pushedGamepadKeys.left = true
   } else {
     pushedGamepadKeys.left = false
   }
-  if (pressedKeys.indexOf('B') !== -1) {
+  if (pressedKeys[1].indexOf('B') !== -1) {
     pushedGamepadKeys.right = true
   } else {
     pushedGamepadKeys.right = false
   }
-  if (pressedKeys.indexOf('X') !== -1) {
+  if (pressedKeys[1].indexOf('X') !== -1) {
     pushedGamepadKeys.up = true
   } else {
     pushedGamepadKeys.up = false
   }
-  if (pressedKeys.indexOf('Y') !== -1) {
+  if (pressedKeys[1].indexOf('Y') !== -1) {
     pushedGamepadKeys.down = true
   } else {
     pushedGamepadKeys.down = false
   }
 
   if (
-    pressedKeys.indexOf('DPad-Up') !== -1 || 
-    pressedKeys.indexOf('DPad-Down') !== -1 || 
-    pressedKeys.indexOf('DPad-Left') !== -1 || 
-    pressedKeys.indexOf('DPad-Right') !== -1) {
+    pressedKeys[1].indexOf('DPad-Up') !== -1 || 
+    pressedKeys[1].indexOf('DPad-Down') !== -1 || 
+    pressedKeys[1].indexOf('DPad-Left') !== -1 || 
+    pressedKeys[1].indexOf('DPad-Right') !== -1) {
       dropBomb()
   }
 
