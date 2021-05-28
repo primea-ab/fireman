@@ -37,6 +37,7 @@ var pushedKeys = {
 }
 
 var player
+var otherPlayers = []
 
 function startgame() {
 
@@ -162,6 +163,10 @@ function draw() {
         if (player) {
           player.draw(ctx)
         }
+        // Draw the rest of the players
+        for (let i = 0; i < otherPlayers.length; i++) {
+          otherPlayers[i].draw(ctx)
+        }
       }
     }
   }
@@ -190,7 +195,6 @@ socket.onmessage = (event) => {
   // Get my coordinates
   var jsonData = JSON.parse(event.data)
   if (jsonData.Id === playerId) {
-    console.log('found me')
     player = {
       x: jsonData.X + 20,
       y: jsonData.Y + 20,
@@ -207,6 +211,23 @@ socket.onmessage = (event) => {
         ctx.fill();
       }
     };
+  } else {
+    otherPlayers.push({
+      x: jsonData.X + 20,
+      y: jsonData.Y + 20,
+      vx: 0,
+      vy: 0,
+      speed: 4,
+      radius: TILE_SIZE / 2,
+      color: jsonData.Color,
+      draw: function(ctx) {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, true);
+        ctx.closePath();
+        ctx.fillStyle = this.color;
+        ctx.fill();
+      }
+    })
   }
 
   console.log('message', JSON.parse(event.data))
