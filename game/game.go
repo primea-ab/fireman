@@ -37,6 +37,7 @@ type Message struct {
 	Y int`json:"Y,omitempty"`
 	Color string `json:"Color,omitempty"`
 	E []Tile `json:"E,omitempty"`
+	BombId int64 `json:"BombId,omitempty"`
 }
 
 type Player struct {
@@ -132,7 +133,11 @@ func (g *Game) Play() {
 				log.Printf("Detonation %#v", explodedTiles)
 				delete(g.Bombs, b.Id)
 
-				g.broadcast(Message{Act: "ex", E: explodedTiles})
+				g.broadcast(Message{Act: "ex", E: explodedTiles, BombId: b.Id})
+				go func(){
+					time.Sleep(time.Second)
+					g.broadcast(Message{Act: "rex", BombId: b.Id})
+				}()
 
 				for id, p := range g.Players {
 					if onAnyTile(p.X, p.Y, explodedTiles) {
