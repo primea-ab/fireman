@@ -1,3 +1,85 @@
+var gamepadAPI = {
+  controller: {},
+  turbo: false,
+  connect: function(evt) {
+    gamepadAPI.controller = evt.gamepad;
+    gamepadAPI.turbo = true;
+    console.log('Gamepad connected.');
+  },
+  disconnect: function(evt) {
+    gamepadAPI.turbo = false;
+    delete gamepadAPI.controller;
+    console.log('Gamepad disconnected.');
+  },
+  update: function() {
+    // clear the buttons cache
+    gamepadAPI.buttonsCache = [];
+    // move the buttons status from the previous frame to the cache
+    for(var k=0; k<gamepadAPI.buttonsStatus.length; k++) {
+      gamepadAPI.buttonsCache[k] = gamepadAPI.buttonsStatus[k];
+    }
+    // clear the buttons status
+    gamepadAPI.buttonsStatus = [];
+    // get the gamepad object
+    var c = gamepadAPI.controller || {};
+  
+    // loop through buttons and push the pressed ones to the array
+    var pressed = [];
+    if(c.buttons) {
+      for(var b=0,t=c.buttons.length; b<t; b++) {
+        if(c.buttons[b].pressed) {
+          pressed.push(gamepadAPI.buttons[b]);
+        }
+      }
+    }
+    // loop through axes and push their values to the array
+    var axes = [];
+    if(c.axes) {
+      for(var a=0,x=c.axes.length; a<x; a++) {
+        axes.push(c.axes[a].toFixed(2));
+      }
+    }
+    // assign received values
+    gamepadAPI.axesStatus = axes;
+    gamepadAPI.buttonsStatus = pressed;
+    // return buttons for debugging purposes
+    return pressed;
+  },
+  buttonPressed: function(button, hold) {
+    var newPress = false;
+    // loop through pressed buttons
+    for(var i=0,s=gamepadAPI.buttonsStatus.length; i<s; i++) {
+      // if we found the button we're looking for...
+      if(gamepadAPI.buttonsStatus[i] == button) {
+        // set the boolean variable to true
+        newPress = true;
+        // if we want to check the single press
+        if(!hold) {
+          // loop through the cached states from the previous frame
+          for(var j=0,p=gamepadAPI.buttonsCache.length; j<p; j++) {
+            // if the button was already pressed, ignore new press
+            if(gamepadAPI.buttonsCache[j] == button) {
+              newPress = false;
+            }
+          }
+        }
+      }
+    }
+    return newPress;
+  },
+  buttons: [
+    'DPad-Up','DPad-Down','DPad-Left','DPad-Right',
+    'Start','Back','Axis-Left','Axis-Right',
+    'LB','RB','Power','A','B','X','Y',
+  ],
+  buttonsCache: [],
+  buttonsStatus: [],
+  axesStatus: []
+};
+
+
+
+
 const playerId = 'id'+Math.floor(Math.random() * 1000)
 const socket = new WebSocket('ws://192.168.1.216:8000/ws')
 socket.onerror = (err) => console.log('error', err)
@@ -41,6 +123,13 @@ var pushedKeys = {
   down: false
 }
 
+var pushedGamepadKeys = {
+  left: false,
+  right: false,
+  up: false,
+  down: false
+}
+
 var player
 var otherPlayers = {}
 var bombs = []
@@ -56,6 +145,9 @@ function removeBomb(bx, by) {
 }
 
 function startgame() {
+
+  window.addEventListener("gamepadconnected", gamepadAPI.connect);
+  window.addEventListener("gamepaddisconnected", gamepadAPI.disconnect);
 
   document.addEventListener('keydown', (event) => {
     if (movementKeys.left.indexOf(event.key) !== -1) {
@@ -122,11 +214,41 @@ function handleInput() {
   player.vx = 0
   player.vy = 0
 
+  var pressedKeys = gamepadAPI.update()
+  if (pressedKeys.indexOf('A') !== -1) {
+    pushedGamepadKeys.left = true
+  } else {
+    pushedGamepadKeys.left = false
+  }
+  if (pressedKeys.indexOf('B') !== -1) {
+    pushedGamepadKeys.right = true
+  } else {
+    pushedGamepadKeys.right = false
+  }
+  if (pressedKeys.indexOf('X') !== -1) {
+    pushedGamepadKeys.up = true
+  } else {
+    pushedGamepadKeys.up = false
+  }
+  if (pressedKeys.indexOf('Y') !== -1) {
+    pushedGamepadKeys.down = true
+  } else {
+    pushedGamepadKeys.down = false
+  }
+
+  if (
+    pressedKeys.indexOf('DPad-Up') !== -1 || 
+    pressedKeys.indexOf('DPad-Down') !== -1 || 
+    pressedKeys.indexOf('DPad-Left') !== -1 || 
+    pressedKeys.indexOf('DPad-Right') !== -1) {
+      dropBomb()
+  }
+
   // Set new state values
-  if (pushedKeys.right) player.vx = player.speed
-  if (pushedKeys.left) player.vx = -player.speed
-  if (pushedKeys.down) player.vy = player.speed
-  if (pushedKeys.up) player.vy = -player.speed
+  if (pushedKeys.right || pushedGamepadKeys.right) player.vx = player.speed
+  if (pushedKeys.left || pushedGamepadKeys.left) player.vx = -player.speed
+  if (pushedKeys.down || pushedGamepadKeys.down) player.vy = player.speed
+  if (pushedKeys.up || pushedGamepadKeys.up) player.vy = -player.speed
 }
 
 function updateState() {
