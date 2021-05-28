@@ -1,3 +1,7 @@
+const playerId = 'id'+Math.floor(Math.random() * 1000)
+const socket = new WebSocket('ws://localhost:8000/ws')
+socket.onerror = (err) => console.log('error', err)
+
 const map = {
   "tileMap": [
     [33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33],
@@ -24,7 +28,8 @@ var movementKeys = {
   up: ["Up", "ArrowUp", "w", "W"],
   left: ["Left", "ArrowLeft", "a", "A"],
   down: ["Down", "ArrowDown", "s", "S"],
-  right: ["Right", "ArrowRight", "d", "D"]
+  right: ["Right", "ArrowRight", "d", "D"],
+  bomb: ["x", "k"]
 }
 
 var mapSprites
@@ -38,6 +43,15 @@ var pushedKeys = {
 
 var player
 var otherPlayers = []
+var bombs = []
+
+function placeBomb(bx, by) {
+  map.tileMap[by][bx] = 180
+}
+
+function removeBomb(bx, by) {
+  map.tileMap[by][bx] = 0
+}
 
 function startgame() {
 
@@ -53,6 +67,12 @@ function startgame() {
     }
     if (movementKeys.down.indexOf(event.key) !== -1) {
       pushedKeys.down = true
+    }
+    if (movementKeys.bomb.indexOf(event.key) !== -1) {
+      placeBomb(
+        Math.round((player.x - player.radius) / TILE_SIZE),
+        Math.round((player.y - player.radius) / TILE_SIZE)
+      )
     }
   }, false);
 
@@ -144,6 +164,8 @@ function updateState() {
 
   player.x += player.vx
   player.y += player.vy
+
+  socket.send(JSON.stringify({Id: playerId, X: player.x, Y: player.y}))
 }
 
 function draw() {
@@ -182,10 +204,6 @@ function gameLoop() {
 
   window.requestAnimationFrame(gameLoop)
 }
-
-const playerId = 'id'+Math.floor(Math.random() * 1000)
-const socket = new WebSocket('ws://localhost:8000/ws')
-socket.onerror = (err) => console.log('error', err)
 
 socket.onopen = (event) => {
   socket.send(JSON.stringify({Id: playerId}))
