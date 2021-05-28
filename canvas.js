@@ -177,10 +177,6 @@ function draw() {
         player.draw(ctx)
       }
     }
-
-    //ctx.drawImage(mapSprites[0], 0, 0, TILE_SIZE, TILE_SIZE);
-    //ctx.drawImage(mapSprites[1], TILE_SIZE, 0, TILE_SIZE, TILE_SIZE);
-    //ctx.drawImage(mapSprites[2], TILE_SIZE*2, 0, TILE_SIZE, TILE_SIZE);
   }
 }
 
