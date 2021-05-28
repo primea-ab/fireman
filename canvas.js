@@ -374,6 +374,51 @@ function updateState() {
   sendMove(player.x, player.y)
 }
 
+function bombExplodeTiles(bombX, bombY, bombLength) {
+  // bombX & bombY are tile coordinates, length is nr of tiles
+
+  // Always explode its own tile
+  explodes = [[bombX, bombY]]
+
+  if (map.tileMap[bombY][bombX]) {
+    return explodes
+  }
+
+  // Up
+  for (int i = 0; i <= bombLength && bombY - i >= 0; i++) {
+    if (map.tileMap[bombY - i][bombX]) {
+      break
+    }
+    explodes.push([bombY - i, bombX])
+  }
+
+  // Down
+  for (int i = 0; i <= bombLength && bombY + i < map.tileMap.length; i++) {
+    if (map.tileMap[bombY + 1][bombX]) {
+      break
+    }
+    explodes.push([bombY + i, bombX])
+  }
+
+  // Right
+  for (int i = 0; i <= bombLength && bombX + i < map.tileMap[0].length; i++) {
+    if (map.tileMap[bombY][bombX + 1]) {
+      break
+    }
+    explodes.push([bombY, bombX + 1])
+  }
+
+  // Right
+  for (int i = 0; i <= bombLength && bombX + i >= 0; i++) {
+    if (map.tileMap[bombY][bombX - 1]) {
+      break
+    }
+    explodes.push([bombY, bombX - 1])
+  }
+
+  return explodes
+} 
+
 function draw() {
   if (!mapSprites) {return}
   var canvas = document.getElementById('canvas');
