@@ -77,9 +77,6 @@ var gamepadAPI = {
   axesStatus: []
 };
 
-
-
-
 const playerId = 'id'+Math.floor(Math.random() * 1000)
 const socket = new WebSocket(`ws://${window.location.host}/ws`)
 socket.onerror = (err) => console.log('error', err)
@@ -133,7 +130,7 @@ var pushedGamepadKeys = {
 
 var player
 var otherPlayers = {}
-var bombs = []
+var explosions = []
 
 function placeBomb(bx, by) {
   if (map.tileMap[by][bx] === 0) {
@@ -389,7 +386,7 @@ function bombExplodeTiles(bombX, bombY, bombLength) {
   }
 
   // Up
-  for (int i = 0; i <= bombLength && bombY - i >= 0; i++) {
+  for (let i = 0; i <= bombLength && bombY - i >= 0; i++) {
     if (map.tileMap[bombY - i][bombX]) {
       break
     }
@@ -397,7 +394,7 @@ function bombExplodeTiles(bombX, bombY, bombLength) {
   }
 
   // Down
-  for (int i = 0; i <= bombLength && bombY + i < map.tileMap.length; i++) {
+  for (let i = 0; i <= bombLength && bombY + i < map.tileMap.length; i++) {
     if (map.tileMap[bombY + 1][bombX]) {
       break
     }
@@ -405,7 +402,7 @@ function bombExplodeTiles(bombX, bombY, bombLength) {
   }
 
   // Right
-  for (int i = 0; i <= bombLength && bombX + i < map.tileMap[0].length; i++) {
+  for (let i = 0; i <= bombLength && bombX + i < map.tileMap[0].length; i++) {
     if (map.tileMap[bombY][bombX + 1]) {
       break
     }
@@ -413,7 +410,7 @@ function bombExplodeTiles(bombX, bombY, bombLength) {
   }
 
   // Right
-  for (int i = 0; i <= bombLength && bombX + i >= 0; i++) {
+  for (let i = 0; i <= bombLength && bombX + i >= 0; i++) {
     if (map.tileMap[bombY][bombX - 1]) {
       break
     }
@@ -510,6 +507,7 @@ socket.onmessage = (event) => {
       break;
     case 'ex':
       console.log(jsonData)
+      break
     default: 
       if (jsonData.Id === playerId) {
         player = {
