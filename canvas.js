@@ -139,7 +139,6 @@ function placeBomb(bx, by) {
 }
 
 function removeBomb(bx, by) {
-  console.log(`removing bomb at: ${bx},${by}`)
   map.tileMap[by][bx] = 0
 }
 
@@ -376,51 +375,6 @@ function updateState() {
   sendMove(player.x, player.y)
 }
 
-function bombExplodeTiles(bombX, bombY, bombLength) {
-  // bombX & bombY are tile coordinates, length is nr of tiles
-
-  // Always explode its own tile
-  explodes = [[bombX, bombY]]
-
-  if (map.tileMap[bombY][bombX]) {
-    return explodes
-  }
-
-  // Up
-  for (let i = 0; i <= bombLength && bombY - i >= 0; i++) {
-    if (map.tileMap[bombY - i][bombX]) {
-      break
-    }
-    explodes.push([bombY - i, bombX])
-  }
-
-  // Down
-  for (let i = 0; i <= bombLength && bombY + i < map.tileMap.length; i++) {
-    if (map.tileMap[bombY + 1][bombX]) {
-      break
-    }
-    explodes.push([bombY + i, bombX])
-  }
-
-  // Right
-  for (let i = 0; i <= bombLength && bombX + i < map.tileMap[0].length; i++) {
-    if (map.tileMap[bombY][bombX + 1]) {
-      break
-    }
-    explodes.push([bombY, bombX + 1])
-  }
-
-  // Right
-  for (let i = 0; i <= bombLength && bombX + i >= 0; i++) {
-    if (map.tileMap[bombY][bombX - 1]) {
-      break
-    }
-    explodes.push([bombY, bombX - 1])
-  }
-
-  return explodes
-} 
-
 function draw() {
   if (!mapSprites) {return}
   var canvas = document.getElementById('canvas');
@@ -504,7 +458,7 @@ socket.onmessage = (event) => {
       placeBomb(jsonData.X, jsonData.Y)
       break;
     case 'ex':
-      removeBomb(jsonData.E[0].Y, jsonData.E[0].Y)
+      removeBomb(jsonData.E[0].X, jsonData.E[0].Y)
       break
     default: 
       if (jsonData.Id === playerId) {
@@ -544,8 +498,6 @@ socket.onmessage = (event) => {
       }
   }
   draw()
-
-  // console.log('message', JSON.parse(event.data))
 }
 socket.onclose = (event) => console.log('close', event)
 
