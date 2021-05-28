@@ -17,6 +17,7 @@ type Message struct {
 	Id string 
 	X float32 
 	Y float32
+	Color string
 }
 
 type Player struct {
@@ -24,6 +25,7 @@ type Player struct {
 	Y float32
 	InGame bool
 	Id string
+	Color string
 	OutChan chan Message
 }
 
@@ -47,15 +49,21 @@ func (g *Game) AddPlayer(player *Player) {
 	if len(g.Players) == 0 {
 		player.X = float32(tileSize)
 		player.Y = float32(tileSize)
+		player.Color = "red"
 	} else if len(g.Players) == 1 {
 		player.X = float32(tileSize*17)
 		player.Y = float32(tileSize*13)
+		player.Color = "blue"
 	} else if len(g.Players) == 2 {
 		player.X = float32(tileSize*17)
 		player.Y = float32(tileSize)
+		player.Color = "orange"
 	} else if len(g.Players) == 3 {
 		player.X = float32(tileSize)
 		player.Y = float32(tileSize*13)
+		player.Color = "purple"
+	} else {
+		return
 	}
 
 	g.Players = append(g.Players, *player)
@@ -64,7 +72,7 @@ func (g *Game) AddPlayer(player *Player) {
 
 	for i := 0; i < len(g.Players); i++ {
 		p := g.Players[i]
-		posMsg := Message{Id: p.Id, X: p.X, Y: p.Y}
+		posMsg := Message{Id: p.Id, X: p.X, Y: p.Y, Color: p.Color}
 		g.broadcast(posMsg)
 	}
 }
