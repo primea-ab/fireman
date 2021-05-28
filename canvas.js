@@ -1,5 +1,5 @@
 const playerId = 'id'+Math.floor(Math.random() * 1000)
-const socket = new WebSocket('ws://localhost:8000/ws')
+const socket = new WebSocket('ws://192.168.1.216:8000/ws')
 socket.onerror = (err) => console.log('error', err)
 
 const map = {
@@ -46,7 +46,9 @@ var otherPlayers = {}
 var bombs = []
 
 function placeBomb(bx, by) {
-  map.tileMap[by][bx] = 180
+  if (map.tileMap[by][bx] === 0) {
+    map.tileMap[by][bx] = 180
+  }
 }
 
 function removeBomb(bx, by) {
@@ -69,10 +71,11 @@ function startgame() {
       pushedKeys.down = true
     }
     if (movementKeys.bomb.indexOf(event.key) !== -1) {
-      placeBomb(
+      dropBomb()
+      /*placeBomb(
         Math.round((player.x - player.radius) / TILE_SIZE),
         Math.round((player.y - player.radius) / TILE_SIZE)
-      )
+      )*/
     }
   }, false);
 
@@ -278,6 +281,9 @@ socket.onmessage = (event) => {
       }
       break;
     case 'bomb':
+      var bx = Math.round((jsonData.X - player.radius) / TILE_SIZE)
+      var by = Math.round((jsonData.Y - player.radius) / TILE_SIZE)
+      placeBomb(bx, by)
       break;
     default: 
       if (jsonData.Id === playerId) {

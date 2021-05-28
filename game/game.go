@@ -45,6 +45,7 @@ func NewGame() *Game {
 	g := &Game{}
 	g.InputChan = make(chan Message)
 	g.Players = map[string]*Player{}
+	g.Bombs = map[int64]*Bomb{}
 	return g
 }
 
