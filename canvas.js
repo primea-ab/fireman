@@ -214,7 +214,11 @@ function startgame() {
     var tempTiles = []
     for (let y = 0; y < image.height / IMAGE_TILE_SIZE; y++) {
       for (let x = 0; x < image.width / IMAGE_TILE_SIZE; x++) {
-        tempTiles.push(createImageBitmap(image, x * 16, y * 16, 16, 16, {premultiplyAlpha: 'premultiply'}))
+        if (y > 2) {
+          tempTiles.push(createImageBitmap(image, x * 16, y * 16 + 1, 16, 16, {premultiplyAlpha: 'premultiply'}))
+        } else {
+          tempTiles.push(createImageBitmap(image, x * 16, y * 16, 16, 16, {premultiplyAlpha: 'premultiply'}))
+        }
       }
     }
 
