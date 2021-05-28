@@ -271,11 +271,13 @@ socket.onmessage = (event) => {
   // Get my coordinates
   var jsonData = JSON.parse(event.data)
   switch(jsonData.Act) {
-    case 'Move':
+    case 'move':
       if (jsonData.Id !== playerId) {
         otherPlayers[jsonData.Id].x = jsonData.X
         otherPlayers[jsonData.Id].y = jsonData.Y
       }
+      break;
+    case 'bomb':
       break;
     default: 
       if (jsonData.Id === playerId) {
@@ -302,7 +304,7 @@ socket.onmessage = (event) => {
           vx: 0,
           vy: 0,
           speed: 4,
-          radius: TILE_SIZE / 3,
+          radius: TILE_SIZE / 2.5,
           color: jsonData.Color,
           draw: function(ctx) {
             ctx.beginPath();
@@ -313,10 +315,8 @@ socket.onmessage = (event) => {
           }
         }
       }
-
-      draw()
   }
-  
+  draw()
 
   // console.log('message', JSON.parse(event.data))
 }
