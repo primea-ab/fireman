@@ -285,7 +285,7 @@ socket.onmessage = (event) => {
           vx: 0,
           vy: 0,
           speed: 4,
-          radius: TILE_SIZE / 3,
+          radius: TILE_SIZE / 2.5,
           color: jsonData.Color,
           draw: function(ctx) {
             ctx.beginPath();
