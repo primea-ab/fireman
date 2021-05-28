@@ -15,6 +15,8 @@ import (
 
 func main() {
 
+	var g = game.NewGame()
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r*http.Request) {
 		body, _ := ioutil.ReadFile("index.html")
 		w.Header().Set("Content-Type", "text/html")
@@ -25,12 +27,18 @@ func main() {
 		w.Header().Set("Content-Type", "application/javascript")
 		w.Write(body)
 	})
+	http.HandleFunc("/cave_B.png", func(w http.ResponseWriter, r *http.Request) {
+		body, _ := ioutil.ReadFile("cave_B.png")
+		w.Header().Set("Content-Type", "image/webbp")
+		w.Write(body)
+	})
+	http.HandleFunc("/start", func(w http.ResponseWriter, r *http.Request) {
+		go g.Play()
+		w.WriteHeader(http.StatusNoContent)
+	})
 
 
 
-	var g = &game.Game{}
-	g.InputChan = make(chan game.Message)
-	go g.Play()
 
 
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request){
@@ -58,9 +66,9 @@ func main() {
 		bufrw.WriteString("HTTP/1.1 101  Switching Procotcols\nUpgrade: websocket\nConnection: Upgrade\nSec-WebSocket-Accept: " + acceptH + "\n\n")
 		bufrw.Flush()
 
-
+		player := &game.Player{InGame: false, Id: ""}
 		outChan := make(chan game.Message)
-		g.Players = append(g.Players, outChan)
+		player.OutChan = outChan
 		go func(w *bufio.ReadWriter){
 			for {
 				outMsg := <- outChan
@@ -73,6 +81,9 @@ func main() {
 
 		// Now the websockts is set up.
 		// Starting a read loop
+
+
+		
 
 		for {
 			// log.Printf("Reading")
@@ -101,11 +112,19 @@ func main() {
 				msg[i] = maskedMsg[i] ^ mask[i % 4]
 			}
 
+			log.Printf("Read bytes %s", msg)
 			var message game.Message
 			_ = json.Unmarshal(msg, &message)
-			// log.Printf("Read bytes %v", message)
 
-			g.InputChan <- message
+			// Add player
+			if player.InGame {
+				g.InputChan <- message
+			} else {
+				player.Id = message.Id
+				g.AddPlayer(player)
+			}
+
+	
 		}
 	})
 	log.Fatal(http.ListenAndServe(":8000", nil))
@@ -125,3 +144,4 @@ func WriteToSocket(w *bufio.ReadWriter, msg []byte) error {
 	}
 	return w.Flush()
 }
+

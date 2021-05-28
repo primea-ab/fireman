@@ -36,22 +36,8 @@ var pushedKeys = {
   down: false
 }
 
-var player = {
-  x: 60,
-  y: 60,
-  vx: 0,
-  vy: 0,
-  speed: 4,
-  radius: TILE_SIZE / 3,
-  color: 'blue',
-  draw: function(ctx) {
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, true);
-    ctx.closePath();
-    ctx.fillStyle = this.color;
-    ctx.fill();
-  }
-};
+var player
+var otherPlayers = []
 
 function startgame() {
 
@@ -213,21 +199,76 @@ function draw() {
         } else {
           ctx.drawImage(mapSprites[map.tileMap[y][x]], x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE)
         }
-        player.draw(ctx)
+        if (player) {
+          player.draw(ctx)
+        }
+        // Draw the rest of the players
+        for (let i = 0; i < otherPlayers.length; i++) {
+          otherPlayers[i].draw(ctx)
+        }
       }
     }
-
-    //ctx.drawImage(mapSprites[0], 0, 0, TILE_SIZE, TILE_SIZE);
-    //ctx.drawImage(mapSprites[1], TILE_SIZE, 0, TILE_SIZE, TILE_SIZE);
-    //ctx.drawImage(mapSprites[2], TILE_SIZE*2, 0, TILE_SIZE, TILE_SIZE);
   }
 }
 
 
 function gameLoop() {
-  handleInput()
-  updateState()
+  if (player) {
+    handleInput()
+    updateState()
+  }
   draw()
 
   window.requestAnimationFrame(gameLoop)
 }
+
+const playerId = 'id'+Math.floor(Math.random() * 1000)
+const socket = new WebSocket('ws://localhost:8000/ws')
+socket.onerror = (err) => console.log('error', err)
+
+socket.onopen = (event) => {
+  socket.send(JSON.stringify({Id: playerId}))
+}
+socket.onmessage = (event) => {
+
+  // Get my coordinates
+  var jsonData = JSON.parse(event.data)
+  if (jsonData.Id === playerId) {
+    player = {
+      x: jsonData.X + 20,
+      y: jsonData.Y + 20,
+      vx: 0,
+      vy: 0,
+      speed: 4,
+      radius: TILE_SIZE / 4,
+      color: jsonData.Color,
+      draw: function(ctx) {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, true);
+        ctx.closePath();
+        ctx.fillStyle = this.color;
+        ctx.fill();
+      }
+    };
+  } else {
+    otherPlayers.push({
+      x: jsonData.X + 20,
+      y: jsonData.Y + 20,
+      vx: 0,
+      vy: 0,
+      speed: 4,
+      radius: TILE_SIZE / 2,
+      color: jsonData.Color,
+      draw: function(ctx) {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, true);
+        ctx.closePath();
+        ctx.fillStyle = this.color;
+        ctx.fill();
+      }
+    })
+  }
+
+  console.log('message', JSON.parse(event.data))
+}
+socket.onclose = (event) => console.log('close', event)
