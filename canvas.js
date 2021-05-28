@@ -1,20 +1,20 @@
 const map = {
   "tileMap": [
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1],
-    [1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1],
-    [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+    [33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33],
+    [33,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,33],
+    [33,0,71,0,71,0,71,0,71,0,71,0,71,0,71,0,71,0,33],
+    [33,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,33],
+    [33,0,71,0,71,0,71,0,71,0,71,0,71,0,71,0,71,0,33],
+    [33,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,33],
+    [33,0,71,0,71,0,71,0,71,0,71,0,71,0,71,0,71,0,33],
+    [33,0,0,0,0,0,0,0,0,133,0,0,0,0,0,0,0,0,33],
+    [33,0,71,0,71,0,71,0,71,0,71,0,71,0,71,0,71,0,33],
+    [33,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,33],
+    [33,0,71,0,71,0,71,0,71,0,71,0,71,0,71,0,71,0,33],
+    [33,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,33],
+    [33,0,71,0,71,0,71,0,71,0,71,0,71,0,71,0,71,0,33],
+    [33,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,33],
+    [33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33]
   ]
 }
 
@@ -26,6 +26,8 @@ var movementKeys = {
   down: ["Down", "ArrowDown", "s", "S"],
   right: ["Right", "ArrowRight", "d", "D"]
 }
+
+var mapSprites
 
 var pushedKeys = {
   left: false,
@@ -39,7 +41,7 @@ var player = {
   y: 60,
   vx: 0,
   vy: 0,
-  speed: 5,
+  speed: 4,
   radius: TILE_SIZE / 2,
   color: 'blue',
   draw: function(ctx) {
@@ -83,7 +85,26 @@ function startgame() {
     }
   }, false);
 
-  gameLoop()
+  image = new Image();
+
+  // Wait for the sprite sheet to load
+  image.onload = function() {
+    const IMAGE_TILE_SIZE = 16
+    var tempTiles = []
+    for (let y = 0; y < image.height / IMAGE_TILE_SIZE; y++) {
+      for (let x = 0; x < image.width / IMAGE_TILE_SIZE; x++) {
+        tempTiles.push(createImageBitmap(image, x * 16, y * 16, 16, 16)) // Add all tiles flipped?
+      }
+    }
+
+    Promise.all(tempTiles).then(function(sprites) {
+      mapSprites = sprites
+      // Draw each sprite onto the canvas
+      gameLoop()
+    });
+  }
+
+  image.src = 'cave_B.png'
 }
 
 function handleInput() {
@@ -113,7 +134,7 @@ function updateState() {
     player.vx = 0
   }
   if ((topRight || bottomRight) && player.vx > 0) {
-    player.x = Math.floor(tx) * TILE_SIZE + player.radius
+    player.x = Math.ceil(tx) * TILE_SIZE - player.radius
     player.vx = 0
   }
 
@@ -144,18 +165,22 @@ function draw() {
   
   if (canvas.getContext) {
     var ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
     ctx.clearRect(0, 0, canvas.width, canvas.height)
     for (let x = 0; x < map.tileMap[0].length; x++) {
       for (let y = 0; y < map.tileMap.length; y++) {
         if (map.tileMap[y][x] === 0) {
           ctx.strokeRect(x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE);
-        } else if (map.tileMap[y][x] === 1) {
-          ctx.fillStyle = 'black'
-          ctx.fillRect(x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        } else {
+          ctx.drawImage(mapSprites[map.tileMap[y][x]], x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE)
         }
         player.draw(ctx)
       }
     }
+
+    //ctx.drawImage(mapSprites[0], 0, 0, TILE_SIZE, TILE_SIZE);
+    //ctx.drawImage(mapSprites[1], TILE_SIZE, 0, TILE_SIZE, TILE_SIZE);
+    //ctx.drawImage(mapSprites[2], TILE_SIZE*2, 0, TILE_SIZE, TILE_SIZE);
   }
 }
 
